@@ -1,6 +1,11 @@
  Virtual Machine Manager
  =======================
 
++---------------------------------------+
+| TESTING FORK                          |
+| Robert Trebula <github@zero.sk.eu.org>|
++---------------------------------------+
+
 This application provides a graphical tool for managing virtual machines
 via the libvirt library.
 
