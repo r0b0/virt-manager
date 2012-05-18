@@ -233,6 +233,26 @@
                         </child>
                       </object>
                     </child>
+                    <child>
+                      <object class="GtkRadioMenuItem" id="menuitem_datacenter_view">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">_Datacenter View</property>
+                        <property name="use_underline">True</property>
+                        <property name="draw_as_radio">True</property>
+                        <property name="group">radiomenuitem1</property>
+                        <signal name="toggled" handler="on_menuitem_datacenter_view_toggled"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkRadioMenuItem" id="menuitem_logical_view">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">_Logical View</property>
+                        <property name="use_underline">True</property>
+                        <property name="draw_as_radio">True</property>
+                        <property name="group">radiomenuitem1</property>
+                        <signal name="toggled" handler="on_menuitem_logical_view_toggled"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
@@ -467,5 +487,9 @@
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkRadioMenuItem" id="radiomenuitem1">
+    <property name="visible">True</property>
+    <property name="draw_as_radio">True</property>
   </object>
 </interface>

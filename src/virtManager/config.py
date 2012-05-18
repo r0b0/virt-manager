@@ -345,6 +345,16 @@ class vmmConfig(object):
         return self.conf.notify_add(
                         self.conf_dir + "/vmlist-fields/network_traffic", cb)
 
+    def is_datacenter_view(self):
+        return self.conf.get_bool(self.conf_dir + "datacenter_view")
+    def is_logical_view(self):
+        return not self.conf.get_bool(self.conf_dir + "datacenter_view")
+    def set_datacenter_view(self, state):
+        self.conf.set_bool(self.conf_dir+"datacenter_view", state)
+    def set_logical_view(self, state):
+        self.conf.set_bool(self.conf_dir+"datacenter_view", not state)
+
+
     # Keys preferences
     def get_keys_combination(self):
         ret = self.conf.get_string(self.conf_dir + "/keys/grab-keys")

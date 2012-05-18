@@ -130,6 +130,9 @@ class vmmManager(vmmGObjectUI):
             "on_menu_edit_preferences_activate": self.show_preferences,
             "on_menu_help_about_activate": self.show_about,
             "on_menu_help_activate": self.show_help,
+
+            "on_menuitem_logical_view_toggled": self.logical_datacenter_view,
+            "on_menuitem_datacenter_view_toggled": self.logical_datacenter_view
         })
 
         self.init_vmlist()
@@ -259,6 +262,10 @@ class vmmManager(vmmGObjectUI):
                             self.config.is_vmlist_disk_io_visible())
         self.widget("menu_view_stats_network").set_active(
                             self.config.is_vmlist_network_traffic_visible())
+        self.widget("menuitem_datacenter_view").set_active(
+                            self.config.is_datacenter_view())
+        self.widget("menuitem_logical_view").set_active(
+                            self.config.is_logical_view())
 
     def init_toolbar(self):
         self.widget("vm-new").set_icon_name("vm_new")
@@ -512,6 +519,11 @@ class vmmManager(vmmGObjectUI):
 
     def show_help(self, src_ignore):
         self.emit("action-show-help", None)
+
+    def logical_datacenter_view(self, src_ignore):
+        if self.widget("menuitem_datacenter_view").get_active() != self.config.is_datacenter_view():
+            self.config.set_datacenter_view(self.widget("menuitem_datacenter_view").get_active())
+            logging.debug("Switch view")
 
     def show_preferences(self, src_ignore):
         self.emit("action-show-preferences")
