@@ -346,13 +346,21 @@ class vmmConfig(object):
                         self.conf_dir + "/vmlist-fields/network_traffic", cb)
 
     def is_datacenter_view(self):
-        return self.conf.get_bool(self.conf_dir + "datacenter_view")
+        try:
+            return self.conf.get_value(self.conf_dir + "/datacenter_view")=="datacenter"
+        except ValueError:
+            self.conf.set_value(self.conf_dir + "/datacenter_view", "datacenter")
+            return True
     def is_logical_view(self):
-        return not self.conf.get_bool(self.conf_dir + "datacenter_view")
-    def set_datacenter_view(self, state):
-        self.conf.set_bool(self.conf_dir+"datacenter_view", state)
-    def set_logical_view(self, state):
-        self.conf.set_bool(self.conf_dir+"datacenter_view", not state)
+        try:
+            return self.conf.get_value(self.conf_dir + "/datacenter_view")=="logical"
+        except ValueError:
+            self.conf.set_value(self.conf_dir + "/datacenter_view", "datacenter")
+            return False
+    def set_datacenter_view(self):
+        self.conf.set_value(self.conf_dir+"/datacenter_view", "datacenter")
+    def set_logical_view(self):
+        self.conf.set_value(self.conf_dir+"/datacenter_view", "logical")
 
 
     # Keys preferences

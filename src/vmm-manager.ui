@@ -239,8 +239,7 @@
                         <property name="label" translatable="yes">_Datacenter View</property>
                         <property name="use_underline">True</property>
                         <property name="draw_as_radio">True</property>
-                        <property name="group">radiomenuitem1</property>
-                        <signal name="toggled" handler="on_menuitem_datacenter_view_toggled"/>
+                        <signal name="toggled" handler="on_menuitem_datacenter_view_toggled" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -249,8 +248,8 @@
                         <property name="label" translatable="yes">_Logical View</property>
                         <property name="use_underline">True</property>
                         <property name="draw_as_radio">True</property>
-                        <property name="group">radiomenuitem1</property>
-                        <signal name="toggled" handler="on_menuitem_logical_view_toggled"/>
+                        <property name="group">menuitem_datacenter_view</property>
+                        <signal name="toggled" handler="on_menuitem_logical_view_toggled" swapped="no"/>
                       </object>
                     </child>
                   </object>

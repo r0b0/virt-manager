@@ -440,6 +440,10 @@ class vmmManager(vmmGObjectUI):
         model.set_sort_func(COL_NETWORK, self.vmlist_network_usage_sorter)
         model.set_sort_column_id(COL_NAME, gtk.SORT_ASCENDING)
 
+        if self.config.is_logical_view():
+            self._append_logical_group_row(model, "Host Connections")
+            self._append_logical_group_row(model, "Virtual Machines")
+
     ##################
     # Helper methods #
     ##################
@@ -469,8 +473,10 @@ class vmmManager(vmmGObjectUI):
         handle = row[ROW_HANDLE]
         if row[ROW_IS_CONN]:
             return handle
-        else:
+        elif row[ROW_IS_VM]:
             return handle.conn
+        else:
+            return None
 
     def current_vmuuid(self):
         vm = self.current_vm()
@@ -521,9 +527,19 @@ class vmmManager(vmmGObjectUI):
         self.emit("action-show-help", None)
 
     def logical_datacenter_view(self, src_ignore):
-        if self.widget("menuitem_datacenter_view").get_active() != self.config.is_datacenter_view():
-            self.config.set_datacenter_view(self.widget("menuitem_datacenter_view").get_active())
-            logging.debug("Switch view")
+        if self.widget("menuitem_datacenter_view").get_active() == self.config.is_datacenter_view():
+            return
+        if self.widget("menuitem_logical_view").get_active() == self.config.is_logical_view():
+            return
+
+        logging.debug("Switch view")
+        if self.widget("menuitem_datacenter_view").get_active():
+            self.config.set_datacenter_view()
+        if self.widget("menuitem_logical_view").get_active():
+            self.config.set_logical_view()
+
+        raise NotImplementedError, "We should redraw the VM list now"
+        # TODO redraw the vm-list
 
     def show_preferences(self, src_ignore):
         self.emit("action-show-preferences")
@@ -792,13 +808,41 @@ class vmmManager(vmmGObjectUI):
 
         return row
 
+    def _build_logical_group_row(self, name):
+        row = []
+        row.insert(ROW_HANDLE, None)
+        row.insert(ROW_NAME, name)
+        row.insert(ROW_MARKUP, "<span size='smaller'>%s</span>" % name)
+        row.insert(ROW_STATUS, (""))
+        row.insert(ROW_STATUS_ICON, None)
+        row.insert(ROW_KEY, name)
+        row.insert(ROW_HINT, "") # TODO
+        row.insert(ROW_IS_CONN, False)
+        row.insert(ROW_IS_CONN_CONNECTED, False)
+        row.insert(ROW_IS_VM, False)
+        row.insert(ROW_IS_VM_RUNNING, False)
+        row.insert(ROW_COLOR, None)
+        row.insert(ROW_INSPECTION_OS_ICON, None)
+        return row
+
+    def _append_logical_group_row(self, model, name):
+        row_key = name
+        row = self._build_logical_group_row(row_key)
+        _iter = model.append(None, row)
+        path = model.get_path(_iter)
+        self.rows[row_key] = model[path]
+
     def _append_vm(self, model, vm, conn):
         row_key = self.vm_row_key(vm)
         if row_key in self.rows:
             return
 
         row = self._build_vm_row(vm)
-        parent = self.rows[conn.get_uri()].iter
+        parent = None
+        if self.config.is_datacenter_view():
+            parent = self.rows[conn.get_uri()].iter
+        elif self.config.is_logical_view():
+            parent = self.rows["Virtual Machines"].iter
 
         _iter = model.append(parent, row)
         path = model.get_path(_iter)
@@ -825,7 +869,14 @@ class vmmManager(vmmGObjectUI):
         row.insert(ROW_COLOR, self._build_conn_color(conn))
         row.insert(ROW_INSPECTION_OS_ICON, None)
 
-        _iter = model.append(None, row)
+        if self.config.is_datacenter_view():
+            _iter = model.append(None, row)
+        elif self.config.is_logical_view():
+            parent = self.rows["Host Connections"].iter
+            _iter = model.append(parent, row)
+            # self.widget("vm-list").expand_row(parent, False) # FIXUP
+            self.widget("vm-list").expand_row(model.get_path(parent), False)
+            
         path = model.get_path(_iter)
         self.rows[conn.get_uri()] = model[path]
         return _iter
