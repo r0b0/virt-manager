@@ -538,8 +538,43 @@ class vmmManager(vmmGObjectUI):
         if self.widget("menuitem_logical_view").get_active():
             self.config.set_logical_view()
 
-        raise NotImplementedError, "We should redraw the VM list now"
-        # TODO redraw the vm-list
+        vmlist = self.widget("vm-list")
+        old_model = vmlist.get_model()
+        old_rows = self.rows
+
+        # TODO this is replicated from init_vmlist()
+
+        # Handle, name, markup, status, status icon name, key/uuid, hint,
+        # is conn, is conn connected, is vm, is vm running, fg color,
+        # inspection icon
+        model = gtk.TreeStore(object, str, str, str, str, str, str,
+                              bool, bool, bool, bool, gtk.gdk.Color,
+                              gtk.gdk.Pixbuf)
+        vmlist.set_model(model)
+        self.rows = {}
+
+        model.set_sort_func(COL_NAME, self.vmlist_name_sorter)
+        model.set_sort_func(COL_GUEST_CPU, self.vmlist_guest_cpu_usage_sorter)
+        model.set_sort_func(COL_HOST_CPU, self.vmlist_host_cpu_usage_sorter)
+        model.set_sort_func(COL_DISK, self.vmlist_disk_io_sorter)
+        model.set_sort_func(COL_NETWORK, self.vmlist_network_usage_sorter)
+        model.set_sort_column_id(COL_NAME, gtk.SORT_ASCENDING)
+
+        if self.config.is_logical_view():
+            self._append_logical_group_row(model, "Host Connections")
+            self._append_logical_group_row(model, "Virtual Machines")
+
+        # re-add all rows, connections first, VMs later
+        for row_key in old_rows:
+            row = old_rows[row_key]
+            if row[ROW_IS_CONN]:
+                conn = row[ROW_HANDLE]
+                self.add_conn(False, conn)
+        for row_key in old_rows:
+            row = old_rows[row_key]
+            if row[ROW_IS_VM]:
+                vm = row[ROW_HANDLE]
+                self._append_vm(model, vm, vm.conn)
 
     def show_preferences(self, src_ignore):
         self.emit("action-show-preferences")
@@ -816,7 +851,7 @@ class vmmManager(vmmGObjectUI):
         row.insert(ROW_STATUS, (""))
         row.insert(ROW_STATUS_ICON, None)
         row.insert(ROW_KEY, name)
-        row.insert(ROW_HINT, "") # TODO
+        row.insert(ROW_HINT, None)
         row.insert(ROW_IS_CONN, False)
         row.insert(ROW_IS_CONN_CONNECTED, False)
         row.insert(ROW_IS_VM, False)
@@ -888,12 +923,6 @@ class vmmManager(vmmGObjectUI):
         if conn.get_uri() in self.rows:
             return
 
-        conn.connect("vm-added", self.vm_added)
-        conn.connect("vm-removed", self.vm_removed)
-        conn.connect("resources-sampled", self.conn_resources_sampled)
-        conn.connect("state-changed", self.conn_state_changed)
-        conn.connect("connect-error", self._connect_error)
-
         # add the connection to the treeModel
         vmlist = self.widget("vm-list")
         row = self._append_conn(vmlist.get_model(), conn)
@@ -916,6 +945,12 @@ class vmmManager(vmmGObjectUI):
 
             newname = conn.get_pretty_desc_inactive(False, True)
             self.conn_resources_sampled(conn, newname)
+
+        conn.connect("vm-added", self.vm_added)
+        conn.connect("vm-removed", self.vm_removed)
+        conn.connect("resources-sampled", self.conn_resources_sampled)
+        conn.connect("state-changed", self.conn_state_changed)
+        conn.connect("connect-error", self._connect_error)
 
     def remove_conn(self, engine_ignore, uri):
         model = self.widget("vm-list").get_model()
