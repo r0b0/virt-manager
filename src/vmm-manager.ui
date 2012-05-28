@@ -487,8 +487,4 @@
       </object>
     </child>
   </object>
-  <object class="GtkRadioMenuItem" id="radiomenuitem1">
-    <property name="visible">True</property>
-    <property name="draw_as_radio">True</property>
-  </object>
 </interface>

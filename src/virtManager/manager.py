@@ -165,6 +165,7 @@ class vmmManager(vmmGObjectUI):
 
         # Queue up the default connection detector
         self.idle_emit("add-default-conn")
+        # TODO if Logical View is default, it is not expanded
 
     ##################
     # Common methods #
@@ -1140,7 +1141,7 @@ class vmmManager(vmmGObjectUI):
         return False
 
     def popup_vm_menu(self, model, _iter, event):
-        if model.iter_parent(_iter) != None:
+        if model.get_value(_iter, ROW_IS_VM):
             # Popup the vm menu
             vm = model.get_value(_iter, ROW_HANDLE)
 
@@ -1165,7 +1166,7 @@ class vmmManager(vmmGObjectUI):
             self.vmmenushutdown_items["forcepoweroff"].set_sensitive(destroy)
             self.vmmenushutdown_items["save"].set_sensitive(destroy)
             self.vmmenu.popup(None, None, None, 0, event.time)
-        else:
+        elif model.get_value(_iter, ROW_IS_CONN):
             # Pop up connection menu
             conn = model.get_value(_iter, ROW_HANDLE)
             disconn = (conn.get_state() == vmmConnection.STATE_DISCONNECTED)
