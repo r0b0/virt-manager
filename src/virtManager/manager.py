@@ -263,9 +263,9 @@ class vmmManager(vmmGObjectUI):
         self.widget("menu_view_stats_network").set_active(
                             self.config.is_vmlist_network_traffic_visible())
         self.widget("menuitem_datacenter_view").set_active(
-                            self.config.is_datacenter_view())
+                            self.config.get_datacenter_view()=="datacenter")
         self.widget("menuitem_logical_view").set_active(
-                            self.config.is_logical_view())
+                            self.config.get_datacenter_view()=="logical")
 
     def init_toolbar(self):
         self.widget("vm-new").set_icon_name("vm_new")
@@ -440,7 +440,7 @@ class vmmManager(vmmGObjectUI):
         model.set_sort_func(COL_NETWORK, self.vmlist_network_usage_sorter)
         model.set_sort_column_id(COL_NAME, gtk.SORT_ASCENDING)
 
-        if self.config.is_logical_view():
+        if self.config.get_datacenter_view()=="logical":
             self._append_logical_group_row(model, "Host Connections")
             self._append_logical_group_row(model, "Virtual Machines")
 
@@ -527,16 +527,16 @@ class vmmManager(vmmGObjectUI):
         self.emit("action-show-help", None)
 
     def logical_datacenter_view(self, src_ignore):
-        if self.widget("menuitem_datacenter_view").get_active() == self.config.is_datacenter_view():
+        if self.widget("menuitem_datacenter_view").get_active() and self.config.get_datacenter_view()=="datacenter":
             return
-        if self.widget("menuitem_logical_view").get_active() == self.config.is_logical_view():
+        if self.widget("menuitem_logical_view").get_active() and self.config.get_datacenter_view()=="logical":
             return
 
         logging.debug("Switch view")
         if self.widget("menuitem_datacenter_view").get_active():
-            self.config.set_datacenter_view()
+            self.config.set_datacenter_view("datacenter")
         if self.widget("menuitem_logical_view").get_active():
-            self.config.set_logical_view()
+            self.config.set_datacenter_view("logical")
 
         vmlist = self.widget("vm-list")
         old_model = vmlist.get_model()
@@ -560,7 +560,7 @@ class vmmManager(vmmGObjectUI):
         model.set_sort_func(COL_NETWORK, self.vmlist_network_usage_sorter)
         model.set_sort_column_id(COL_NAME, gtk.SORT_ASCENDING)
 
-        if self.config.is_logical_view():
+        if self.config.get_datacenter_view()=="logical":
             self._append_logical_group_row(model, "Host Connections")
             self._append_logical_group_row(model, "Virtual Machines")
 
@@ -874,9 +874,9 @@ class vmmManager(vmmGObjectUI):
 
         row = self._build_vm_row(vm)
         parent = None
-        if self.config.is_datacenter_view():
+        if self.config.get_datacenter_view()=="datacenter":
             parent = self.rows[conn.get_uri()].iter
-        elif self.config.is_logical_view():
+        elif self.config.get_datacenter_view()=="logical":
             parent = self.rows["Virtual Machines"].iter
 
         _iter = model.append(parent, row)
@@ -904,12 +904,11 @@ class vmmManager(vmmGObjectUI):
         row.insert(ROW_COLOR, self._build_conn_color(conn))
         row.insert(ROW_INSPECTION_OS_ICON, None)
 
-        if self.config.is_datacenter_view():
+        if self.config.get_datacenter_view()=="datacenter":
             _iter = model.append(None, row)
-        elif self.config.is_logical_view():
+        elif self.config.get_datacenter_view()=="logical":
             parent = self.rows["Host Connections"].iter
             _iter = model.append(parent, row)
-            # self.widget("vm-list").expand_row(parent, False) # FIXUP
             self.widget("vm-list").expand_row(model.get_path(parent), False)
             
         path = model.get_path(_iter)
