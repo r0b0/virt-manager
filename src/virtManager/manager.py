@@ -18,6 +18,9 @@
 # MA 02110-1301 USA.
 #
 
+# TODO if Logical View is default, first connection doesn't get expaded 
+#       automatically
+
 import logging
 import re
 
@@ -165,7 +168,6 @@ class vmmManager(vmmGObjectUI):
 
         # Queue up the default connection detector
         self.idle_emit("add-default-conn")
-        # TODO if Logical View is default, it is not expanded
 
     ##################
     # Common methods #
@@ -362,14 +364,8 @@ class vmmManager(vmmGObjectUI):
     def init_vmlist(self):
         vmlist = self.widget("vm-list")
         self.widget("vm-notebook").set_show_tabs(False)
+        self.init_model()
 
-        # Handle, name, markup, status, status icon name, key/uuid, hint,
-        # is conn, is conn connected, is vm, is vm running, fg color,
-        # inspection icon
-        model = gtk.TreeStore(object, str, str, str, str, str, str,
-                              bool, bool, bool, bool, gtk.gdk.Color,
-                              gtk.gdk.Pixbuf)
-        vmlist.set_model(model)
         vmlist.set_tooltip_column(ROW_HINT)
         vmlist.set_headers_visible(True)
         vmlist.set_level_indentation(-15)
@@ -434,6 +430,17 @@ class vmmManager(vmmGObjectUI):
                             self.config.is_vmlist_network_traffic_visible(),
                             COL_NETWORK)
 
+    def init_model(self):
+        vmlist = self.widget("vm-list")
+
+        # Handle, name, markup, status, status icon name, key/uuid, hint,
+        # is conn, is conn connected, is vm, is vm running, fg color,
+        # inspection icon
+        model = gtk.TreeStore(object, str, str, str, str, str, str,
+                              bool, bool, bool, bool, gtk.gdk.Color,
+                              gtk.gdk.Pixbuf)
+        vmlist.set_model(model)
+
         model.set_sort_func(COL_NAME, self.vmlist_name_sorter)
         model.set_sort_func(COL_GUEST_CPU, self.vmlist_guest_cpu_usage_sorter)
         model.set_sort_func(COL_HOST_CPU, self.vmlist_host_cpu_usage_sorter)
@@ -444,6 +451,7 @@ class vmmManager(vmmGObjectUI):
         if self.config.get_datacenter_view()=="logical":
             self._append_logical_group_row(model, "Host Connections")
             self._append_logical_group_row(model, "Virtual Machines")
+
 
     ##################
     # Helper methods #
@@ -542,28 +550,9 @@ class vmmManager(vmmGObjectUI):
         vmlist = self.widget("vm-list")
         old_model = vmlist.get_model()
         old_rows = self.rows
-
-        # TODO this is replicated from init_vmlist()
-
-        # Handle, name, markup, status, status icon name, key/uuid, hint,
-        # is conn, is conn connected, is vm, is vm running, fg color,
-        # inspection icon
-        model = gtk.TreeStore(object, str, str, str, str, str, str,
-                              bool, bool, bool, bool, gtk.gdk.Color,
-                              gtk.gdk.Pixbuf)
-        vmlist.set_model(model)
         self.rows = {}
-
-        model.set_sort_func(COL_NAME, self.vmlist_name_sorter)
-        model.set_sort_func(COL_GUEST_CPU, self.vmlist_guest_cpu_usage_sorter)
-        model.set_sort_func(COL_HOST_CPU, self.vmlist_host_cpu_usage_sorter)
-        model.set_sort_func(COL_DISK, self.vmlist_disk_io_sorter)
-        model.set_sort_func(COL_NETWORK, self.vmlist_network_usage_sorter)
-        model.set_sort_column_id(COL_NAME, gtk.SORT_ASCENDING)
-
-        if self.config.get_datacenter_view()=="logical":
-            self._append_logical_group_row(model, "Host Connections")
-            self._append_logical_group_row(model, "Virtual Machines")
+        self.init_model()
+        model = vmlist.get_model()
 
         # re-add all rows, connections first, VMs later
         for row_key in old_rows:
