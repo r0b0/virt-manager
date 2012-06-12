@@ -18,9 +18,6 @@
 # MA 02110-1301 USA.
 #
 
-# TODO if Logical View is default, first connection doesn't get expaded 
-#       automatically
-
 import logging
 import re
 
