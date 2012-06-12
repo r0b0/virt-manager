@@ -864,10 +864,15 @@ class vmmManager(vmmGObjectUI):
 
         row = self._build_vm_row(vm)
         parent = None
-        if self.config.get_datacenter_view()=="datacenter":
+        if (self.config.get_datacenter_view()=="datacenter" and 
+            conn.get_uri() in self.rows.keys()):
             parent = self.rows[conn.get_uri()].iter
-        elif self.config.get_datacenter_view()=="logical":
+        elif (self.config.get_datacenter_view()=="logical" and 
+            "Virtual Machines" in self.rows.keys()):
             parent = self.rows["Virtual Machines"].iter
+
+        if parent is None:
+            return
 
         _iter = model.append(parent, row)
         path = model.get_path(_iter)
@@ -912,6 +917,12 @@ class vmmManager(vmmGObjectUI):
         if conn.get_uri() in self.rows:
             return
 
+        conn.connect("vm-added", self.vm_added)
+        conn.connect("vm-removed", self.vm_removed)
+        conn.connect("resources-sampled", self.conn_resources_sampled)
+        conn.connect("state-changed", self.conn_state_changed)
+        conn.connect("connect-error", self._connect_error)
+
         # add the connection to the treeModel
         vmlist = self.widget("vm-list")
         row = self._append_conn(vmlist.get_model(), conn)
@@ -934,12 +945,6 @@ class vmmManager(vmmGObjectUI):
 
             newname = conn.get_pretty_desc_inactive(False, True)
             self.conn_resources_sampled(conn, newname)
-
-        conn.connect("vm-added", self.vm_added)
-        conn.connect("vm-removed", self.vm_removed)
-        conn.connect("resources-sampled", self.conn_resources_sampled)
-        conn.connect("state-changed", self.conn_state_changed)
-        conn.connect("connect-error", self._connect_error)
 
     def remove_conn(self, engine_ignore, uri):
         model = self.widget("vm-list").get_model()
